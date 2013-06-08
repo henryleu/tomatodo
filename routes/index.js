@@ -63,6 +63,9 @@ module.exports = function(app) {
     app.get('/test', function(req, res) {
         throw new Error('test error handling');
     });
+    app.get('/snippet', function(req, res) {
+        res.render('snippet', {});
+    });
 
 };
 
