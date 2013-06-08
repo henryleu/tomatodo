@@ -642,3 +642,14 @@ button:focus.cystal-button img {
   width: 6.382978723404255%;
   *width: 6.329787234042553%;
 }
+.progress-stopped .bar,
+.progress .bar-stopped {
+    background-color: #999999;
+    background-image: -moz-linear-gradient(top, #aaaaaa, #828282);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#aaaaaa), to(#828282));
+    background-image: -webkit-linear-gradient(top, #aaaaaa, #828282);
+    background-image: -o-linear-gradient(top, #aaaaaa, #828282);
+    background-image: linear-gradient(to bottom, #aaaaaa, #828282);
+    background-repeat: repeat-x;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffaaaaaa', endColorstr='#ff828282', GradientType=0);
+}
