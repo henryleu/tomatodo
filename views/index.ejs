@@ -1,0 +1,325 @@
+<% layout('boilerplate') -%>
+<script>
+    window.tomato = {};
+    var countdown = function(o){
+        var me = this;
+        if(!o){ throw new Error('need options argument'); }
+        me.o = o;
+        me.id = o.id;
+        me.counter = o.counter; // HTML container of countdown timer board
+        me.unit = String( o.timeout).charAt( o.timeout.length-1 );
+        var _timeout = parseInt( o.timeout );
+        var timeoutSecFactor = me._unitMap[me.unit];
+        if(!timeoutSecFactor){
+            throw new Error('"timeout" argument should be like "10s", "10m" or "1h"');
+        }
+        me.timeout = _timeout*timeoutSecFactor*1000; //timeout milliseconds
+        me.timeoutUnit = _timeout*timeoutSecFactor; //timeout seconds
+
+        if(o.step){
+            me.stepUnit = String( o.step).charAt( o.step.length-1 );
+            var _step = parseInt( o.step );
+            var stepSecFactor = me._unitMap[me.stepUnit];
+            if(!stepSecFactor){
+                throw new Error('"step" argument should be like "10s", "10m" or "1h"');
+            }
+            me.step = _step*stepSecFactor*1000; //step milliseconds
+            me.stepCount = 0;
+            var stepTotal = Math.floor( me.timeout/me.step ) + 1;
+            me.stepTotal = me.timeout%me.step==0 ? stepTotal : stepTotal+1;
+        }
+        me._initData();
+        me._updateView();
+        var onRefreshFn = function(){
+            me._refreshData();
+            if(o.refreshCallback){
+                o.refreshCallback.call(me);
+            }
+            me._refreshStep();
+        };
+        var onStartFn = o.startCallback ? function(){o.startCallback.call(me);} : o.startCallback;
+        var onPauseFn = o.pauseCallback ? function(){o.pauseCallback.call(me);} : o.pauseCallback;
+        var onResumeFn = o.resumeCallback ? function(){o.resumeCallback.call(me);} : o.resumeCallback;
+        var onStopFn = o.stopCallback ? function(){o.stopCallback.call(me);} : o.stopCallback;
+        var onFinishFn = function(){
+            me._finishData();
+            me._updateView();
+            me._updateStep();
+            if(o.finishCallback){
+                o.finishCallback.call(me);
+            }
+        };
+        var onKillFn = function(){
+            me._finishData();
+            me._updateView();
+            me._updateStep();
+            if(o.killCallback){
+                o.killCallback.call(me);
+            }
+        };
+        $.timer( me.id, onRefreshFn, me.refreshInterval, {
+            timeout: me.timeout,
+            startCallback: onStartFn,
+            pauseCallback: onPauseFn,
+            resumeCallback: onResumeFn,
+            stopCallback: onStopFn,
+            finishCallback: onFinishFn,
+            killCallback: onKillFn
+        });
+        me.timer = $.timer(me.id);
+    };
+    tomato.countdown = countdown;
+    countdown.prototype = {refreshInterval: 200};
+    countdown.prototype._unitMap = { 's': 1,  'm': 60, 'h': 3600 };
+    countdown.prototype.onInit = function(){};
+    countdown.prototype.onFinished = function () {};
+    countdown.prototype.init = function(){
+        var me = this;
+        me._initData();
+        me._updateView();
+        me.onInit();
+    };
+    countdown.prototype.start = function(){this.timer.start();};
+    countdown.prototype.stop = function(){this.timer.stop();};
+    countdown.prototype.pause = function(){this.timer.pause();};
+    countdown.prototype.resume = function(){this.timer.resume();};
+    countdown.prototype.kill = function(){this.timer.kill();};
+    countdown.prototype.getStatus = function(){return this.timer.status();};
+    countdown.prototype.getProgress = function(){return this.progress;};
+    countdown.prototype._initData = function(){
+        var me = this;
+        me.passed = 0;
+        me.left = me.timeout;
+        me.progress = 0.0;
+        me.passedUnit = 0;
+        me.leftUnit = me.timeoutUnit;
+        me.leftSeconds = me.leftUnit % 60;
+        me.leftMinutes = Math.floor(me.leftUnit/60)%60;
+        me.leftHours = Math.floor(me.leftUnit/3600)%60;
+        me.stepCount = 0;
+    };
+    countdown.prototype._finishData = function(){
+        var me = this;
+        me.passed = me.timeout;
+        me.left = 0;
+        me.progress = 100.0;
+        me.passedUnit = me.timeoutUnit;
+        me.leftUnit = 0;
+        me.leftSeconds = 0;
+        me.leftMinutes = 0;
+        me.leftHours = 0;
+        me.stepCount = me.stepTotal;
+    };
+    countdown.prototype._refreshData = function(){
+        var me = this;
+        var passed = $.timer(me.id).getPassedTime();
+        var left = me.timeout-passed;
+        me.passed = passed;
+        me.left = left;
+        me.progress = me.passed/me.timeout*100;
+        me.passedUnit = passed%1000>900?Math.ceil( passed/1000 ):Math.floor( passed/1000 );
+        var leftUnit = me.timeoutUnit - me.passedUnit;
+        if(leftUnit!=me.leftUnit){
+            me.leftUnit = leftUnit;
+            var oldLeftSeconds = me.leftSeconds;
+            me.leftSeconds = leftUnit % 60;
+            if( oldLeftSeconds==0 ){
+                var oldLeftMinutes = me.leftMinutes;
+                var leftMinutes = Math.floor(leftUnit/60)%60;
+                if(leftMinutes!=oldLeftMinutes){
+                    me.leftMinutes = leftMinutes;
+                    if( oldLeftMinutes==0 ){
+                        var oldLeftHours = me.leftHours;
+                        var leftHours = Math.floor(leftUnit/3600)%60;
+                        if(leftHours!=oldLeftHours){
+                            me.leftHours = leftHours;
+                            me._updateView('hms' );
+                        }
+                    }
+                    else{
+                        me._updateView('ms' );
+                    }
+                }
+            }
+            else{
+                me._updateView('s' );
+            }
+        }
+    };
+    countdown.prototype._refreshStep = function(){
+        var me = this;
+        if(me.o.step){
+            var stepCount = Math.floor(me.passed/me.step)+1;
+            if( stepCount<=me.stepTotal && stepCount!=me.stepCount){
+                me.stepCount = stepCount;
+                me._updateStep();
+            }
+        }
+    };
+    countdown.prototype._updateView = function (unit) {
+        var me = this;
+        $( '#'+me.counter).html( me._pad(me.leftMinutes, 2) + ':' + me._pad(me.leftSeconds, 2) );
+    };
+    countdown.prototype._updateStep = function(){
+        var me = this;
+        if(me.o.stepCallback){
+            me.o.stepCallback.call(me);
+        }
+    };
+    countdown.prototype._pad = function (num, size) {
+        var s = ""+num;
+        while (s.length < size) s = "0" + s;
+        return s;
+    };
+
+    window.tomatocache = {
+        setting:{
+            tomotoTime: '25m',
+            breakTime: '5m'
+        },
+        user: {
+            tomotoTime: '25m',
+            breakTime: '5m'
+        }
+    };
+    $(document).ready(function(){
+        var tomatoCountdown = new tomato.countdown({
+            id: 'tomatoCountdown',
+            counter: 'counter',
+            timeout: '25m',
+            step: '1s',
+            refreshCallback: function(){},
+            stepCallback: function(){$('#progress').css('width', (1-this.getProgress())+'%');},
+            startCallback: function(){
+                $('#'+this.counter).removeClass('stopped').addClass('running');
+                $('#progress').css('width', '100%');
+                $('#tomatoBtn').removeAttr("disabled").html('停止快跑');
+                $('#breakBtn').attr('disabled',"true");
+            },
+            finishCallback: function(){
+                $('#'+this.counter).removeClass('running').addClass('stopped');
+                $('#progress').css('width', '0%');
+                $('#tomatoBtn').removeAttr("disabled").html('开始快跑');
+                $('#breakBtn').removeAttr("disabled");
+                //TODO: prompt user
+            },
+            killCallback: function(){
+                $('#'+this.counter).removeClass('running').addClass('stopped');
+                $('#progress').css('width', '0%');
+                $('#tomatoBtn').removeAttr("disabled").html('开始快跑');
+                $('#breakBtn').removeAttr("disabled");
+            }
+        });
+        tomatoCountdown.onInit = function(){
+            $('#tomatoBtn').removeAttr("disabled");
+            $('#breakBtn').removeAttr("disabled");
+        };
+        tomatoCountdown.init();
+
+        var breakCountdown = new tomato.countdown({
+            id: 'breakCountdown',
+            counter: 'counter',
+            timeout: '5m',
+            step: '1s',
+            refreshCallback: function(){},
+            stepCallback: function(){$('#progress').css('width', (1-this.getProgress())+'%');},
+            startCallback: function(){
+                $('#'+this.counter).removeClass('stopped').addClass('running');
+                $('#progress').css('width', '100%');
+                $('#tomatoBtn').attr('disabled',"true");
+                $('#breakBtn').removeAttr("disabled").html('停止休息');
+            },
+            finishCallback: function(){
+                $('#'+this.counter).removeClass('running').addClass('stopped');
+                $('#tomatoBtn').removeAttr("disabled").html('开始快跑');
+                $('#breakBtn').removeAttr("disabled").html('开始休息');
+            },
+            killCallback: function(){
+                $('#'+this.counter).removeClass('running').addClass('stopped');
+                $('#progress').css('width', '0%');
+                $('#tomatoBtn').removeAttr("disabled").html('开始快跑');
+                $('#breakBtn').removeAttr("disabled").html('开始休息');
+            }
+        });
+        breakCountdown.onInit = function(){
+            $('#tomatoBtn').removeAttr("disabled");
+            $('#breakBtn').removeAttr("disabled");
+        };
+        //breakCountdown.init();
+
+        $('#tomatoBtn').click(function(){
+            if( tomatoCountdown.getStatus()=='finished' || tomatoCountdown.getStatus()=='stopped' || tomatoCountdown.getStatus()=='killed' ){
+                tomatoCountdown.start();
+            }
+            else if( tomatoCountdown.getStatus()=='running'){
+                tomatoCountdown.kill();
+            }
+        });
+        $('#breakBtn').click(function(){
+            if( breakCountdown.getStatus()=='finished' || breakCountdown.getStatus()=='stopped' || breakCountdown.getStatus()=='killed' ){
+                breakCountdown.start();
+            }
+            else if( breakCountdown.getStatus()=='running'){
+                breakCountdown.kill();
+            }
+        });
+    });
+</script>
+<br><br><br><br><br>
+<style>
+    .running {color: #3C8CFF;}
+    .stop {color: gray;}
+    .remainTime{
+        text-align:center;
+        font-size:160px;
+        line-height:1.2;
+    }
+    .task{
+        display: block;
+        margin: auto;
+        height: 20px;
+        width: 400px;
+        padding: 20px 15px;
+        font-weight: bold;
+        text-align: left;
+    }
+</style>
+<div class="container-fluid">
+<div class="row-fluid">
+    <div class="offset3 span6">
+        <div id="counter" class="remainTime"></div>
+    </div>
+</div>
+<div class="row-fluid">
+    <div class="offset3 span6">
+        <div class="progress progress-striped active">
+            <div id="progress" class="bar" style="width: 0%;"></div>
+        </div>
+    </div>
+</div>
+<div class="row-fluid">
+    <div class="offset3 span4 nopadding">
+        <textarea id="tomato-task" rows="2" title="请输入任务..." placeholder="请输入任务..." class="task" style="margin: 0px 77px 0px 0px; width: 406px; height: 21px;"></textarea>
+    </div>
+    <div class="span2">
+        <button id="tomatoBtn" class="btn btn-large btn-block btn-primary">番茄快跑</button>
+    </div>
+</div>
+<div class="row-fluid">&nbsp;</div>
+<div class="row-fluid">
+    <div class="offset3 span4">
+        <div class="btn-group pull-right" data-toggle="button-checkbox">
+            <button class="btn btn-large">喝水</button>
+            <button class="btn btn-large">洗手间</button>
+            <button class="btn btn-large">活动</button>
+            <button class="btn btn-large">回电话</button>
+            <button class="btn btn-large">其他</button>
+        </div>
+    </div>
+    <div class="span2">
+        <button id="breakBtn" class="btn btn-large btn-block btn-warning">番茄休息</button>
+    </div>
+</div>
+
+
+</div>
