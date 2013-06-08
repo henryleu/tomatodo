@@ -29,7 +29,6 @@
             me.stepTotal = me.timeout%me.step==0 ? stepTotal : stepTotal+1;
         }
         me._initData();
-        me._updateView();
         var onRefreshFn = function(){
             me._refreshData();
             if(o.refreshCallback){
@@ -50,7 +49,7 @@
             }
         };
         var onKillFn = function(){
-            me._finishData();
+            //me._finishData();
             me._updateView();
             me._updateStep();
             if(o.killCallback){
@@ -71,13 +70,11 @@
     tomato.countdown = countdown;
     countdown.prototype = {refreshInterval: 200};
     countdown.prototype._unitMap = { 's': 1,  'm': 60, 'h': 3600 };
-    countdown.prototype.onInit = function(){};
     countdown.prototype.onFinished = function () {};
-    countdown.prototype.init = function(){
+    countdown.prototype.reset = function(){
         var me = this;
         me._initData();
         me._updateView();
-        me.onInit();
     };
     countdown.prototype.start = function(){this.timer.start();};
     countdown.prototype.stop = function(){this.timer.stop();};
@@ -116,7 +113,7 @@
         var left = me.timeout-passed;
         me.passed = passed;
         me.left = left;
-        me.progress = me.passed/me.timeout*100;
+        me.progress = 100*me.passed/me.timeout;
         me.passedUnit = passed%1000>900?Math.ceil( passed/1000 ):Math.floor( passed/1000 );
         var leftUnit = me.timeoutUnit - me.passedUnit;
         if(leftUnit!=me.leftUnit){
@@ -189,7 +186,7 @@
             timeout: '25m',
             step: '1s',
             refreshCallback: function(){},
-            stepCallback: function(){$('#progress').css('width', (1-this.getProgress())+'%');},
+            stepCallback: function(){$('#progress').css('width', (100-this.getProgress())+'%');},
             startCallback: function(){
                 $('#'+this.counter).removeClass('stopped').addClass('running');
                 $('#progress').css('width', '100%');
@@ -205,16 +202,12 @@
             },
             killCallback: function(){
                 $('#'+this.counter).removeClass('running').addClass('stopped');
-                $('#progress').css('width', '0%');
+                //$('#progress').css('width', '0%');
                 $('#tomatoBtn').removeAttr("disabled").html('开始快跑');
                 $('#breakBtn').removeAttr("disabled");
             }
         });
-        tomatoCountdown.onInit = function(){
-            $('#tomatoBtn').removeAttr("disabled");
-            $('#breakBtn').removeAttr("disabled");
-        };
-        tomatoCountdown.init();
+        tomatoCountdown.reset();
 
         var breakCountdown = new tomato.countdown({
             id: 'breakCountdown',
@@ -222,7 +215,7 @@
             timeout: '5m',
             step: '1s',
             refreshCallback: function(){},
-            stepCallback: function(){$('#progress').css('width', (1-this.getProgress())+'%');},
+            stepCallback: function(){$('#progress').css('width', (100-this.getProgress())+'%');},
             startCallback: function(){
                 $('#'+this.counter).removeClass('stopped').addClass('running');
                 $('#progress').css('width', '100%');
@@ -236,19 +229,15 @@
             },
             killCallback: function(){
                 $('#'+this.counter).removeClass('running').addClass('stopped');
-                $('#progress').css('width', '0%');
+                //$('#progress').css('width', '0%');
                 $('#tomatoBtn').removeAttr("disabled").html('开始快跑');
                 $('#breakBtn').removeAttr("disabled").html('开始休息');
             }
         });
-        breakCountdown.onInit = function(){
-            $('#tomatoBtn').removeAttr("disabled");
-            $('#breakBtn').removeAttr("disabled");
-        };
-        //breakCountdown.init();
 
         $('#tomatoBtn').click(function(){
             if( tomatoCountdown.getStatus()=='finished' || tomatoCountdown.getStatus()=='stopped' || tomatoCountdown.getStatus()=='killed' ){
+                tomatoCountdown.reset();
                 tomatoCountdown.start();
             }
             else if( tomatoCountdown.getStatus()=='running'){
@@ -257,6 +246,7 @@
         });
         $('#breakBtn').click(function(){
             if( breakCountdown.getStatus()=='finished' || breakCountdown.getStatus()=='stopped' || breakCountdown.getStatus()=='killed' ){
+                breakCountdown.reset();
                 breakCountdown.start();
             }
             else if( breakCountdown.getStatus()=='running'){
@@ -285,6 +275,7 @@
     }
 </style>
 <div class="container-fluid">
+    <div id="test" ></div>
 <div class="row-fluid">
     <div class="offset3 span6">
         <div id="counter" class="remainTime"></div>
@@ -309,10 +300,10 @@
 <div class="row-fluid">
     <div class="offset3 span4">
         <div class="btn-group pull-right" data-toggle="button-checkbox">
-            <button class="btn btn-large">喝水</button>
-            <button class="btn btn-large">洗手间</button>
-            <button class="btn btn-large">活动</button>
-            <button class="btn btn-large">回电话</button>
+            <button class="btn btn-large active">活动身体</button>
+            <button class="btn btn-large active">WC</button>
+            <button class="btn btn-large active">喝水</button>
+            <button class="btn btn-large active">工作回顾</button>
             <button class="btn btn-large">其他</button>
         </div>
     </div>
