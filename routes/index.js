@@ -6,6 +6,22 @@ var store = require('../db');
 var redis = store.redis;
 var mongodb = store.mongodb;
 
+var log4js = require('log4js');
+//log the cheese logger messages to a file, and the console ones as well.
+log4js.configure({
+    appenders: [
+        {
+            type: "file",
+            filename: "cheese.log",
+            category: [ 'cheese','console' ]
+        },
+        {
+            type: "console"
+        }
+    ],
+    replaceConsole: true
+});
+//var logger = log4js.getLogger('cheese');
 
 module.exports = function(app) {
     app.get('/', function(req, res) {
