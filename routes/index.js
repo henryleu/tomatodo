@@ -1,72 +1,21 @@
-
-/*
- * GET home page.
- */
 var store = require('../db');
+var logger = require('../logging').logger;
 var redis = store.redis;
 var mongodb = store.mongodb;
 
-var log4js = require('log4js');
-//log the cheese logger messages to a file, and the console ones as well.
-log4js.configure({
-    appenders: [
-        {
-            type: "file",
-            filename: "cheese.log",
-            category: [ 'cheese','console' ]
-        },
-        {
-            type: "console"
-        }
-    ],
-    replaceConsole: true
-});
-//var logger = log4js.getLogger('cheese');
-
 module.exports = function(app) {
     app.get('/', function(req, res) {
-        var callback = function(err, result){
-            if (err) {
-                console.err(err);
-            }
-            else{
-                console.log(result);
-            }
-        };
-        /*
-         mongodb.open(function(err, db) {
-         if (err) {
-         return callback(err);
-         }
-         // 讀取 users 集合
-         db.collection('products_in_suzhou', function(err, collection) {
-         if (err) {
-         mongodb.close();
-         return callback(err);
-         }
-         //collection.ensureIndex('name', {unique: true});
-         collection.findOne({name: "三星NoteII手机"}, function(err, doc) {
-         mongodb.close();
-         if (doc) {
-         callback(err, doc);
-         } else {
-         callback(err, null);
-         }
-         });
-         });
-         });
-         */
         redis.set("test", "Hello World", function (err, reply) {
             if(err){
-                console.error(err);
+                logger.error(err);
             }
-            console.log(reply);
+            logger.debug(reply);
         });
         redis.get("test", function (err, reply) {
             if(err){
-                console.error(err);
+                logger.error(err);
             }
-            console.log(reply);
+            logger.debug(reply);
         });
         req.session.user = {name: 'henryleu', signinStatus: true};
         res.render('index',
@@ -83,60 +32,4 @@ module.exports = function(app) {
         res.render('snippet', {});
     });
 
-};
-
-
-
-exports.index = function (req, res) {
-    var callback = function(err, result){
-        if (err) {
-            console.err(err);
-        }
-        else{
-            console.log(result);
-        }
-    };
-/*
-    mongodb.open(function(err, db) {
-        if (err) {
-            return callback(err);
-        }
-        // 讀取 users 集合
-        db.collection('products_in_suzhou', function(err, collection) {
-            if (err) {
-                mongodb.close();
-                return callback(err);
-            }
-            //collection.ensureIndex('name', {unique: true});
-            collection.findOne({name: "三星NoteII手机"}, function(err, doc) {
-                mongodb.close();
-                if (doc) {
-                    callback(err, doc);
-                } else {
-                    callback(err, null);
-                }
-            });
-        });
-    });
-*/
-    redis.set("test", "Hello World", function (err, reply) {
-        if(err){
-            console.error(err);
-        }
-        console.log(reply);
-    });
-    redis.get("test", function (err, reply) {
-        if(err){
-            console.error(err);
-        }
-        console.log(reply);
-    });
-    req.session.user = {name: 'henryleu', signinStatus: true};
-    res.render('index',
-        {
-            title: '蛤蟆调频',
-                signinStatus: false,
-                displayName: '红蛤蟆'
-        }
-    );
 };
