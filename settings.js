@@ -9,6 +9,10 @@ module.exports = {
         host: 'localhost',
         port: 6379
     },
+    logging: {
+        reloadSecs: 300,
+        level: 'DEBUG'
+    },
     session: {
         storeType: 'mongo',
         expires: 60 // minutes
