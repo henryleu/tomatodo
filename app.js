@@ -26,12 +26,15 @@ app.locals({
     },
     'creator': 'henryleu'
 });
-app.set('port', process.env.PORT || 1000);
+app.set('port', process.env.PORT || 3000);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 app.engine('ejs', engine);
-app.use(express.favicon());
-app.use(express.logger('dev')); //TODO: figure out log levels
+//app.use(express.favicon());
+
+var logging = require('./logging');
+var logger = logging.logger;
+app.use(logging.applogger);
 app.use(express.bodyParser());
 app.use(express.methodOverride());
 app.use(express.cookieParser(settings.cookieSecret));
@@ -42,8 +45,6 @@ app.use(express.session({
 }));
 
 // routing
-//app.use(app.router);
-//app.use(express.router(routes));
 require('./routes')(app);
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -51,7 +52,7 @@ app.use(express.static(path.join(__dirname, 'public')));
     Error Handling
  */
 app.use(function (err, req, res, next) { //Log errors
-    console.error(err.stack);
+    logger.error(err.stack);
     next(err);
 });
 app.use(function (err, req, res, next) { //Handle XHR errors
@@ -76,5 +77,5 @@ if ('development' == app.get('env')) {
 }
 
 http.createServer(app).listen(app.get('port'), function(){
-  console.log('Tomatodo server listening on port ' + app.get('port'));
+    logger.info('Tomatodo server listening on port ' + app.get('port'));
 });
