@@ -26,7 +26,19 @@ app.locals({
     },
     'creator': 'henryleu'
 });
-app.set('port', process.env.PORT || 3000);
+
+var port = process.env.PORT || 3000;
+if(process.argv.length>=3){
+    var nPort = Number(process.argv[2]);
+    if(!isNaN(nPort)){
+        port = nPort;
+    }
+    else{
+        port = 80;
+    }
+}
+
+app.set('port', port);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 app.engine('ejs', engine);
