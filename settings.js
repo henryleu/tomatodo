@@ -14,7 +14,7 @@ module.exports = {
         level: 'DEBUG'
     },
     session: {
-        storeType: 'mongo',
+        storeType: 'redis',
         expires: 60 // minutes
     }
 
