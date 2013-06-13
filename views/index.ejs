@@ -1,20 +1,176 @@
 <% layout('boilerplate') -%>
 <script>
-    window.tomatocache = {
-        setting:{
-            tomotoTime: '25m',
+    var tomatodo = function(){
+        this.userHistory = [];
+    };
+    tomatodo.type = {
+        WORK: 'w',
+        BREAK: 'b'
+    };
+    tomatodo.status = {
+        INITIAL: 'i',
+        RUNNING: 'r',
+        FINISHED: 'f',
+        ABORTED: 'a'
+    };
+    tomatodo.action = {
+        WORK: 'w',
+        BREAK: 'b',
+        FINISH: 'f',
+        ABORT: 'a'
+    };
+    tomatodo.prototype = {
+        settings:{
+            workTime: '25m',
             breakTime: '5m'
         },
-        user: {
-            tomotoTime: '25m',
+        userSettings: {
+            workTime: '25m',
             breakTime: '5m'
-        }
+        },
+        userWorkbench: {
+            current: null,
+            last: null
+        },
+        userHistory: null //an item array as user history
     };
+    tomatodo.create = function(){
+        var me = new Tomatodo();
+        try{
+            //user settings
+            var userSettingsString = window.localStorage['tmtd.userSettings'];
+            if(!userSettingsString){
+                me.userSettings = jQuery.extend(true, {}, me.settings);
+                window.localStorage['tmtd.userSettings'] = JSON.stringify( me.userSettings );
+            }
+            else{
+                me.userSettings = JSON.parse( userSettingsString );//TODO: error handling
+            }
+            //user workbench
+            var userWorkbenchString = window.localStorage['tmtd.userWorkbench'];
+            if(!userWorkbenchString){
+                window.localStorage['tmtd.userWorkbench'] = JSON.stringify( me.userWorkbench );
+            }
+            else{
+                me.userWorkbench = JSON.parse( userWorkbenchString );//TODO: error handling
+            }
+            //user history
+            var userHistoryString = window.localStorage['tmtd.userHistory'];
+            if(!userHistoryString){
+                window.localStorage['tmtd.userHistory'] = JSON.stringify( me.userHistory );
+            }
+            else{
+                me.userHistory = JSON.parse( userHistoryString );//TODO: error handling
+            }
+
+            //Fix and sync the state when user refresh page to stop the running work/break
+            if(me.userWorkbench.current && !me.userWorkbench.current.endTime){
+                me.userWorkbench.current.endTime = new Date().getTime();
+                me.userWorkbench.curren.status = Tomatodo.status.ABORTED;
+            }
+        }
+        catch(e){
+            me.userSettings = $.extend(true, {}, me.settings);
+        }
+        return me;
+    };
+    tomatodo.prototype.commit = function(){
+        var me = this;
+        window.localStorage['tmtd.userSettings'] = JSON.stringify( me.userSettings );
+        window.localStorage['tmtd.userWorkbench'] = JSON.stringify( me.userWorkbench );
+        window.localStorage['tmtd.userHistory'] = JSON.stringify( me.userHistory );
+    };
+    tomatodo.prototype.work = function(){
+        return this.startItem( Tomatodo.type.WORK );
+    };
+    tomatodo.prototype.break = function(){
+        return this.startItem( Tomatodo.type.BREAK );
+    };
+    tomatodo.prototype.abort = function(){
+        return this.finalizeItem( Tomatodo.action.ABORT );
+    };
+    tomatodo.prototype.finish = function(){
+        return this.finalizeItem( Tomatodo.action.FINISH );
+    };
+    tomatodo.prototype.startItem = function(type){
+        var me = this;
+        if( me.userWorkbench.current ){
+            me.userHistory.push( me.userWorkbench.current );
+            me.userWorkbench.current = null;
+        }
+        var ctt = null;
+        if(Tomatodo.type.WORK==type){
+            ctt = $('#work-ctt').val();
+            if(!ctt){
+                alert( '请添加工作内容' );
+                return false;
+            }
+        }
+        else{
+            ctt = "";
+            $('#break-ctt >button').each(function(index, item){
+                var btn = $(item);
+                if(btn.hasClass('active')){
+                    ctt +='【'+btn.text()+'】';
+                }
+            });
+        }
+        me.userWorkbench.current = Tomatodo.Item.newInstance(type, ctt, null);
+        return true;
+    };
+    tomatodo.prototype.finalizeItem = function(action){
+        var me = this;
+        if( me.userWorkbench.current ){
+            var i = me.userWorkbench.current;
+            if(Tomatodo.status.RUNNING==i.status){
+                i.status = action;
+                i.endTime = new Date().getTime();
+                me.userHistory.push(i);
+                me.userWorkbench.current = null;
+            }
+            else{
+                alert('State exception: current item should be running and work item');//TODO: handle this case
+                return false;
+            }
+        }
+        else{
+            alert('State exception: current item should not be null');//TODO: handle this case
+            return false;
+        }
+        return true;
+    };
+    window.Tomatodo = tomatodo;
+
+    var Item = function(){};
+    Item.prototype = {
+        id: null,
+        type: Tomatodo.type.WORK,
+        status: Tomatodo.status.INITIAL,
+        startTime: null,
+        endTime: null,
+        content: null,
+        contentId: null
+    };
+    Item.newInstance = function(type, ctt, cttId){
+        var i = new Item();
+        i.id = new Date().getTime();
+        i.type = type;
+        i.status = Tomatodo.status.RUNNING;
+        i.startTime = new Date().getTime();
+        i.content = ctt;
+        i.contentId = cttId;
+        return i;
+    };
+    window.Tomatodo.Item = Item;
+    var tmtd = null;
+
     $(document).ready(function(){
-        var tomatoCountdown = new countdown({
-            id: 'tomatoCountdown',
+        var userToken = $.cookie('userToken');
+        tmtd = Tomatodo.create();
+        var workCountdown = new countdown({
+            id: 'workCountdown',
             counter: 'counter',
-            timeout: '25m',
+            timeout: tmtd.userSettings.workTime,
             step: '1s',
             refreshCallback: function(){},
             stepCallback: function(){$('#progress').css('width', (100-this.getProgress())+'%');},
@@ -22,29 +178,31 @@
                 $('#'+this.counter).removeClass('stopped').addClass('running');
                 $('.progress').addClass('progress-striped').removeClass('progress-stopped');
                 $('#progress').css('width', '100%');
-                $('#tomatoBtn').removeAttr("disabled").html('停止快跑');
+                $('#workBtn').removeAttr("disabled").html('停止快跑');
                 $('#breakBtn').attr('disabled',"true");
             },
             finishCallback: function(){
                 $('#'+this.counter).removeClass('running').addClass('stopped');
                 $('#progress').css('width', '0%');
-                $('#tomatoBtn').removeAttr("disabled").html('开始快跑');
+                $('#workBtn').removeAttr("disabled").html('开始快跑');
                 $('#breakBtn').removeAttr("disabled");
-                //TODO: prompt user
+                tmtd.finish();
+                tmtd.commit();
+                alert('又完成了一个番茄，帅！');
             },
             killCallback: function(){
                 $('#'+this.counter).removeClass('running').addClass('stopped');
                 $('.progress').removeClass('progress-striped').addClass('progress-stopped');
-                $('#tomatoBtn').removeAttr("disabled").html('开始快跑');
+                $('#workBtn').removeAttr("disabled").html('开始快跑');
                 $('#breakBtn').removeAttr("disabled");
             }
         });
-        tomatoCountdown.reset();
+        workCountdown.reset();
 
         var breakCountdown = new countdown({
             id: 'breakCountdown',
             counter: 'counter',
-            timeout: '5m',
+            timeout: tmtd.userSettings.breakTime,
             step: '1s',
             refreshCallback: function(){},
             stepCallback: function(){$('#progress').css('width', (100-this.getProgress())+'%');},
@@ -52,49 +210,99 @@
                 $('#'+this.counter).removeClass('stopped').addClass('running');
                 $('.progress').addClass('progress-striped').removeClass('progress-stopped');
                 $('#progress').css('width', '100%');
-                $('#tomatoBtn').attr('disabled',"true");
+                $('#workBtn').attr('disabled',"true");
                 $('#breakBtn').removeAttr("disabled").html('停止休息');
             },
             finishCallback: function(){
                 $('#'+this.counter).removeClass('running').addClass('stopped');
-                $('#tomatoBtn').removeAttr("disabled").html('开始快跑');
+                $('#workBtn').removeAttr("disabled").html('开始快跑');
                 $('#breakBtn').removeAttr("disabled").html('开始休息');
+                tmtd.finish();
+                tmtd.commit();
+                alert('会休息的人，才是会工作的人，您太帅了！');
             },
             killCallback: function(){
                 $('#'+this.counter).removeClass('running').addClass('stopped');
                 $('.progress').removeClass('progress-striped').addClass('progress-stopped');
-                $('#tomatoBtn').removeAttr("disabled").html('开始快跑');
+                $('#workBtn').removeAttr("disabled").html('开始快跑');
                 $('#breakBtn').removeAttr("disabled").html('开始休息');
             }
         });
 
-        $('#tomatoBtn').click(function(){
-            if( tomatoCountdown.getStatus()=='finished' || tomatoCountdown.getStatus()=='stopped' || tomatoCountdown.getStatus()=='killed' ){
-                tomatoCountdown.reset();
-                tomatoCountdown.start();
+        $('#workBtn').click(function(){
+            if( workCountdown.getStatus()=='finished' || workCountdown.getStatus()=='stopped' || workCountdown.getStatus()=='killed' ){
+                if(tmtd.work()){
+                    tmtd.commit();
+                    workCountdown.reset();
+                    workCountdown.start();
+                }
             }
-            else if( tomatoCountdown.getStatus()=='running'){
-                tomatoCountdown.kill();
+            else if( workCountdown.getStatus()=='running'){
+                if(tmtd.abort()){
+                    tmtd.commit();
+                    workCountdown.kill();
+                }
             }
         });
         $('#breakBtn').click(function(){
             if( breakCountdown.getStatus()=='finished' || breakCountdown.getStatus()=='stopped' || breakCountdown.getStatus()=='killed' ){
-                breakCountdown.reset();
-                breakCountdown.start();
+                if(tmtd.break()){
+                    tmtd.commit();
+                    breakCountdown.reset();
+                    breakCountdown.start();
+                }
             }
             else if( breakCountdown.getStatus()=='running'){
-                breakCountdown.kill();
+                if(tmtd.abort()){
+                    tmtd.commit();
+                    breakCountdown.kill();
+                }
+            }
+        });
+        $('.cystal-btn').click(function(){
+            if(!$(this).hasClass('pressed')){
+                $('.cystal-btn').removeClass('pressed');
+                $(this).toggleClass('pressed');
+            }
+        });
+        $('#historyBtn1').click(function(){
+            if($(this).hasClass('pressed')){
+                if( $('#historyItemList').length==0 ){
+                    $('#historyBoard').prepend($('<ul id="historyItemList"></ul>'));
+                    var itemList = $('#historyItemList');
+                    if( tmtd.userHistory && tmtd.userHistory.length>0 ){
+                        var his = tmtd.userHistory;
+                        var typeClassMap = {};
+                        typeClassMap[Tomatodo.type.WORK] = 'item-work';
+                        typeClassMap[Tomatodo.type.BREAK] = 'item-break';
+                        var statusClassMap = {};
+                        statusClassMap[Tomatodo.status.FINISHED] = 'alert-success';
+                        statusClassMap[Tomatodo.status.ABORTED] = 'alert-error';
+                        for(var i=his.length-1; i>=0; i--){
+                            var item = his[i];
+                            var typeClass = typeClassMap[item.type];
+                            var statusClass = statusClassMap[item.status];
+                            var itemHtml = '<li class="alert ' + statusClass + '">' + item.content + '</li>';
+                            itemList.append( $(itemHtml) );
+                        }
+                    }
+                }
+                else{
+                }
+                $('#historyBoard').fadeIn();
+            }
+            else{
+                $('#historyBoard').fadeOut();
             }
         });
     });
 </script>
-<br><br><br><br><br>
 <style>
     .running {color: #3C8CFF;}
     .stop {color: gray;}
     .remainTime{
         text-align:center;
-        font-size:160px;
+        font-size:120px;
         line-height:1.2;
     }
     .task{
@@ -106,44 +314,200 @@
         font-weight: bold;
         text-align: left;
     }
+    .item-work {color: gray;}
+    .item-break {color: gray;}
+
+    .cystal-btn{
+        border: 2px solid transparent;
+        border-radius: 4px;
+        -moz-border-radius: 4px;
+        -webkit-border-radius: 4px;
+        opacity:0.7;
+        filter: Alpha(opacity=70);
+        -moz-opacity:.7;
+        background:transparent;
+        padding:4px;
+        height:60px;
+        width:60px;
+        display:inline-block;
+        position:relative;
+        float:left;
+        clear:both;
+        margin:5px;
+        overflow:hidden;
+        -webkit-transition:all 0.3s linear;
+        -moz-transition:all 0.3s linear;
+        -o-transition:all 0.3s linear;
+        transition:all 0.3s linear;
+    }
+    .tomato-icon{
+        background:transparent url("./tomatodo/img/tomato_48.png") no-repeat 0% 0%;
+    }
+    .settings-icon{
+        background:transparent url("./tomatodo/img/settings_48.png") no-repeat 0% 0%;
+    }
+    .clock-icon{
+        background:transparent url("./tomatodo/img/clock_48.png") no-repeat 0% 0%;
+    }
+    .calendar-icon{
+        background:transparent url("./tomatodo/img/calendar_48.png") no-repeat 0% 0%;
+    }
+    .cystal-btn .cystal-btn-icon {
+        width:48px;
+        height:48px;
+        opacity:0.7;
+        position:absolute;
+        left: 4px;
+        top: 4px;
+        margin: 0px;
+        1background:transparent url("./tomatodo/img/clock_48.png") no-repeat 0% 0%;
+        -webkit-transition:all 0.3s linear;
+        -moz-transition:all 0.3s linear;
+        -o-transition:all 0.3s linear;
+        transition:all 0.3s linear;
+    }
+    .cystal-btn .cystal-btn-text {
+        position:absolute;
+        height:100%;
+        top:0px;
+        left:60px;
+        width:0px;
+        color:#1e1e1e;
+        font-size:18px;
+        font-weight: bold;;
+        white-space:nowrap;
+        text-align:left;
+        text-indent:0px;
+        overflow:hidden;
+        line-height:58px;
+    }
+    .cystal-btn:hover{
+        width:160px;
+        border: 2px outset #fff;
+        border-radius: 8px;
+        -moz-border-radius: 8px;
+        -webkit-border-radius: 8px;
+        opacity:1;
+        filter: Alpha(opacity=100);
+        -moz-opacity:1;
+        background-color: rgba(238, 238, 238, 1);
+    }
+    .cystal-btn:hover.pressed{
+        width:160px;
+        border: 2px inset #fff;
+        border-radius: 8px;
+        -moz-border-radius: 8px;
+        -webkit-border-radius: 8px;
+        opacity:1;
+        filter: Alpha(opacity=100);
+        -moz-opacity:1;
+        background-color: rgba(238, 238, 238, 1);
+    }
+    .cystal-btn:hover .cystal-btn-text{
+        width:100px;
+    }
+    .cystal-btn:hover.pressed .cystal-btn-text{
+        width:100px;
+    }
+
+    .cystal-btn:focus{
+        border: 2px outset #fff;
+        border-radius: 8px;
+        -moz-border-radius: 8px;
+        -webkit-border-radius: 8px;
+        opacity:1;
+        filter: Alpha(opacity=100);
+        -moz-opacity:1;
+        background-color: rgba(238, 238, 238, 1);
+    }
+    .cystal-btn.pressed{
+        border: 2px inset #fff;
+        border-radius: 8px;
+        -moz-border-radius: 8px;
+        -webkit-border-radius: 8px;
+        opacity:1;
+        filter: Alpha(opacity=100);
+        -moz-opacity:1;
+        background-color: rgba(238, 238, 238, 1);
+    }
 </style>
 <div class="container-fluid">
-    <div id="test" ></div>
 <div class="row-fluid">
-    <div class="offset3 span6">
-        <div id="counter" class="remainTime"></div>
+<div class="offset1 span2">
+    <br><br><br><br>
+    <div class="row-fluid">
+        <button href="#" class="cystal-btn">
+            <span class="cystal-btn-icon tomato-icon"></span>
+            <span class="cystal-btn-text">工作法</span>
+        </button>
+    </div>
+    <div class="row-fluid">
+        <button id="settingBtn" href="#" class="cystal-btn">
+            <span class="cystal-btn-icon clock-icon"></span>
+            <span class="cystal-btn-text">番茄时钟</span>
+        </button>
+    </div>
+    <div class="row-fluid">
+        <button id="historyBtn" href="#" class="cystal-btn">
+            <span class="cystal-btn-icon calendar-icon"></span>
+            <span class="cystal-btn-text">任务记录</span>
+        </button>
+    </div>
+    <div id="historyBoard">
+    </div>
+    <div class="row-fluid">
+        <button href="#" class="cystal-btn">
+            <span class="cystal-btn-icon settings-icon"></span>
+            <span class="cystal-btn-text">系统设置</span>
+        </button>
     </div>
 </div>
-<div class="row-fluid">
-    <div class="offset3 span6">
-        <div class="progress progress-striped active">
-            <div id="progress" class="bar" style="width: 0%;"></div>
+<div class="span6">
+
+
+    <div class="row-fluid">
+        <div class="span12">
+            <div id="counter" class="remainTime"></div>
         </div>
     </div>
-</div>
-<div class="row-fluid">
-    <div class="offset3 span4 nopadding">
-        <textarea id="tomato-task" rows="2" title="请输入任务..." placeholder="请输入任务..." class="task" style="margin: 0px 77px 0px 0px; width: 406px; height: 21px;"></textarea>
-    </div>
-    <div class="span2">
-        <button id="tomatoBtn" class="btn btn-large btn-block btn-primary">开始快跑</button>
-    </div>
-</div>
-<div class="row-fluid">&nbsp;</div>
-<div class="row-fluid">
-    <div class="offset3 span4">
-        <div class="btn-group pull-right" data-toggle="button-checkbox">
-            <button class="btn btn-large active">活动身体</button>
-            <button class="btn btn-large active">WC</button>
-            <button class="btn btn-large active">喝水</button>
-            <button class="btn btn-large active">工作回顾</button>
-            <button class="btn btn-large">其他</button>
+    <div class="row-fluid">
+        <div class="span12">
+            <div class="progress progress-striped active">
+                <div id="progress" class="bar" style="width: 0%;"></div>
+            </div>
         </div>
     </div>
-    <div class="span2">
-        <button id="breakBtn" class="btn btn-large btn-block btn-warning">开始休息</button>
+    <div class="row-fluid">
+        <div class="span8 nopadding well well-small">
+            <textarea id="work-ctt" rows="2" title="请输入任务..." placeholder="请输入任务..." class="task" style="margin: 0px 77px 0px 0px; width: 406px; height: 21px;"></textarea>
+        </div>
+        <div class="span4 well well-small">
+            <button id="workBtn" class="btn btn-large btn-block1 btn-primary">开始快跑</button>
+        </div>
     </div>
+
+    <div class="row-fluid">
+        <div class="span8 well well-small">
+            <div id="break-ctt" class="btn-group pull-right" data-toggle="button-checkbox">
+                <button class="btn btn-large1 active">活动身体</button>
+                <button class="btn btn-large1 active">WC</button>
+                <button class="btn btn-large1 active">喝水</button>
+                <button class="btn btn-large1 active">工作回顾</button>
+                <button class="btn btn-large1">其他</button>
+            </div>
+        </div>
+        <div class="span4 well well-small">
+            <button id="breakBtn" class="btn btn-large btn-block1 btn-warning">开始休息</button>
+        </div>
+    </div>
+
+
 </div>
+<div class="span3">
+</div>
+</div>
+
+
 
 
 </div>
