@@ -6,14 +6,13 @@ var express = require('express')
     , db = require('./db');
 
 var app = module.exports = express();
-var MongoStore = require('connect-mongo')(express);
-var RedisStore = require('connect-redis')(express);
-
 var sessionStore = null;
 if(settings.session.storeType == 'mongo'){
+    var MongoStore = require('connect-mongo')(express);
     sessionStore = new MongoStore({db: db.mongodb});
 }
 else if(settings.session.storeType == 'redis'){
+    var RedisStore = require('connect-redis')(express);
     sessionStore = new RedisStore({client : db.redis});
 }
 
