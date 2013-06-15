@@ -20,28 +20,13 @@ else if(settings.session.storeType == 'redis'){
 app.set('name', '番茄快跑');
 app.set('title', '番茄快跑 -- 中国最小巧的时间管理工具');
 app.locals({
-    user: {
-        displayName: '你'
-    },
-    'creator': 'henryleu'
+    'creator': '番茄实验室'
 });
 
-var port = process.env.PORT || 3000;
-if(process.argv.length>=3){
-    var nPort = Number(process.argv[2]);
-    if(!isNaN(nPort)){
-        port = nPort;
-    }
-    else{
-        port = 80;
-    }
-}
-
-app.set('port', port);
+app.set('port', process.env.PORT || 3010);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 app.engine('ejs', engine);
-//app.use(express.favicon());
 
 var logging = require('./logging');
 var logger = logging.logger;
@@ -57,7 +42,7 @@ app.use(express.session({
 
 // routing
 require('./routes')(app);
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 /*
     Error Handling
@@ -87,6 +72,6 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
-http.createServer(app).listen(app.get('port'), function(){
+http.createServer(app).listen(app.get('port'),'127.0.0.1', function(){
     logger.info('Tomatodo server listening on port ' + app.get('port'));
 });

@@ -8,9 +8,9 @@
     <meta name="author" content="">
     <title><%=settings.title%></title>
     <link rel="shortcut icon" href="favicon.ico">
-    <link rel="stylesheet" href="./bootstrap/css/bootstrap.css">
-    <link rel="stylesheet" href="./bootstrap/css/bootstrap-responsive.css">
-    <link rel="stylesheet" href="./tomatodo/css/tomatodo.css">
+    <link rel="stylesheet" href="./public/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="./public/bootstrap/css/bootstrap-responsive.css">
+    <link rel="stylesheet" href="./public/tomatodo/css/tomatodo.css">
     <%-stylesheets%>
     <style type="text/css">
 
@@ -19,10 +19,10 @@
     <!--[if lt IE 9]>
     <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <script src="./jquery/jquery-1.10.0.js"></script>
-    <script src="./jquery/jquery.timer.js"></script>
-    <script src="./bootstrap/js/bootstrap.js"></script>
-    <script src="./tomatodo/js/tomatodo.js"></script>
+    <script src="./public/jquery/jquery-1.10.0.js"></script>
+    <script src="./public/jquery/jquery.timer.js"></script>
+    <script src="./public/bootstrap/js/bootstrap.js"></script>
+    <script src="./public/tomatodo/js/tomatodo.js"></script>
     <%-scripts%>
 </head>
 <body>
@@ -38,7 +38,7 @@
                 <span class="icon-bar"></span>
             </a>
             <a class="brand" href="#">
-                <div style="color: #000000;font-weight: bold;"><img src="../tomatodo/img/tomato_32.png"> <%=settings.name%></div>
+                <div style="color: #000000;font-weight: bold;"><img src="../public/tomatodo/img/tomato_32.png"> <%=settings.name%></div>
             </a>
 
             <div class="nav-collapse head-collapse">
@@ -59,7 +59,7 @@
                             <a href="#" class="r-link-small"><i class="icon-envelope"></i> 消息 <span class="badge r-badge-small">2</span></a>
                         </li>
                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle r-link-small" data-toggle="dropdown"><i class="icon-user"></i> <%=user.displayName%> <b class="caret"></b></a>
+                            <a href="#" class="dropdown-toggle r-link-small" data-toggle="dropdown"><i class="icon-user"></i>  <b class="caret"></b></a>
                             <ul class="dropdown-menu">
                                 <li>
                                     <a href="javascript:"> 个人中心</a>
