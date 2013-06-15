@@ -32,10 +32,7 @@ module.exports = function(app) {
         });
         req.session.user = {name: 'henryleu', signinStatus: true};
 */
-        res.render('index',
-            {
-                displayName: '你'
-            }
+        res.render('index',    {}
         );
     });
 
