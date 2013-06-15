@@ -16,6 +16,9 @@ else if(settings.session.storeType == 'redis'){
     sessionStore = new RedisStore({client : db.redis});
 }
 
+//some common configuration
+app.enable('trust proxy');
+
 // all environments
 app.set('name', '番茄快跑');
 app.set('title', '番茄快跑 -- 中国最小巧的时间管理工具');
@@ -31,6 +34,7 @@ app.engine('ejs', engine);
 var logging = require('./logging');
 var logger = logging.logger;
 app.use(logging.applogger);
+app.use(express.compress());
 app.use(express.bodyParser());
 app.use(express.methodOverride());
 app.use(express.cookieParser(settings.cookieSecret));
