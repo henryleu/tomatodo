@@ -3,7 +3,7 @@ tar_dir = /usr/local/apps/
 
 deploy:
 	$(warning stop tomatodo service)
-	sudo service tomatodo stop
+	#sudo service tomatodo stop
 	$(warning remove appdir)
 	sudo rm -Rf $(app_dir)
 	$(warning create appdir)
@@ -19,10 +19,10 @@ install:
 	tar -xf $(tar_dir)tomatodo.tar.gz -C $(app_dir)
 	$(warning npm install)
 	cd $(app_dir)
-	sudo npm install
+	sudo npm update
 	sudo mkdir $(app_dir)logs
 
 start_app:
 	$(warning start tomatodo service)
-	sudo service tomatodo start
+	#sudo service tomatodo start
 
