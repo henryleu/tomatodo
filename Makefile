@@ -9,7 +9,7 @@ deploy:
 	$(warning create appdir)
 	sudo mkdir $(app_dir)
 	sudo make install
-	sudo make start_app
+	#sudo make start_app
 
 install:
 	$(warning install app)
@@ -20,7 +20,7 @@ install:
 	$(warning npm install)
 	cd $(app_dir)
 	pwd
-	sudo npm update
+	#sudo npm update
 	sudo mkdir $(app_dir)logs
 
 start_app:
