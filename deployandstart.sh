@@ -1,7 +1,6 @@
-
-pwd
+#sudo service tomatodo stop
+make deploy
 cd /usr/local/apps/tomatodo
-pwd
 sudo npm update
 #sudo service tomatodo start
 
