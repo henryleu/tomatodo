@@ -19,6 +19,7 @@ install:
 	tar -xf $(tar_dir)tomatodo.tar.gz -C $(app_dir)
 	$(warning npm install)
 	cd $(app_dir)
+	pwd
 	sudo npm update
 	sudo mkdir $(app_dir)logs
 
