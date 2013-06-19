@@ -1,4 +1,3 @@
-#!bash
 
 pwd
 cd /usr/local/apps/tomatodo
