@@ -19,10 +19,10 @@ install:
 	tar -xf $(tar_dir)tomatodo.tar.gz -C $(app_dir)
 	$(warning create log folder)
 	sudo mkdir $(app_dir)logs
-	$(warning run npm update)
-	cd $(app_dir)
-	pwd
-	sudo npm update
+	#$(warning run npm update)
+	#cd $(app_dir)
+	#pwd
+	#sudo npm update
 
 start_app:
 	$(warning start tomatodo service)
