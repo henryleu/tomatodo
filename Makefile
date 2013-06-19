@@ -17,11 +17,12 @@ install:
 	git archive --format=tar master | gzip > $(tar_dir)tomatodo.tar.gz
 	$(warning tar extract package)
 	tar -xf $(tar_dir)tomatodo.tar.gz -C $(app_dir)
-	$(warning npm install)
+	$(warning create log folder)
+	sudo mkdir $(app_dir)logs
+	$(warning run npm update)
 	cd $(app_dir)
 	pwd
-	#sudo npm update
-	sudo mkdir $(app_dir)logs
+	sudo npm update
 
 start_app:
 	$(warning start tomatodo service)
