@@ -2,6 +2,8 @@ app_dir = /usr/local/apps/tomatodo/
 tar_dir = /usr/local/apps/
 
 deploy:
+	$(warning stop tomatodo service)
+	sudo service tomatodo stop
 	$(warning remove appdir)
 	sudo rm -Rf $(app_dir)
 	$(warning create appdir)
@@ -15,13 +17,12 @@ install:
 	git archive --format=tar master | gzip > $(tar_dir)tomatodo.tar.gz
 	$(warning tar extract package)
 	tar -xf $(tar_dir)tomatodo.tar.gz -C $(app_dir)
-	$(warning copy tomatodo.conf)
-	sudo cp ./tomatodo.conf /etc/event.d/tomatodo
 	$(warning npm install)
 	cd $(app_dir)
 	sudo npm install
+	sudo mkdir $(app_dir)logs
 
 start_app:
-	$(warning start app)
-	sudo start --no-wait -q tomatodo
+	$(warning start tomatodo service)
+	sudo service tomatodo start
 
