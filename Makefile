@@ -8,7 +8,7 @@ deploy:
 	sudo mkdir $(app_dir)
 	$(warning git archive)
 	sudo rm -f $(tar_dir)tomatodo.tar.gz
-	sudo git archive --format=tar master | gzip > $(tar_dir)tomatodo.tar.gz
+	sudo git archive --format=tar origin/master | gzip > $(tar_dir)tomatodo.tar.gz
 	$(warning tar extract package)
 	tar -xf $(tar_dir)tomatodo.tar.gz -C $(app_dir)
 	$(warning create log folder)
