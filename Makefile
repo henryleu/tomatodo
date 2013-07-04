@@ -13,4 +13,6 @@ deploy:
 	tar -xf $(tar_dir)tomatodo.tar.gz -C $(app_dir)
 	$(warning create log folder)
 	sudo mkdir $(app_dir)logs
+	sudo mv $(app_dir)app.js $(app_dir)tomatodo.js
+
 
