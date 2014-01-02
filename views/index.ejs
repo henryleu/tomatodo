@@ -1,5 +1,5 @@
 <% layout('boilerplate') -%>
-<script>
+<script xmlns="http://www.w3.org/1999/html">
     var tomatodo = function(){
         this.userHistory = [];
     };
@@ -102,18 +102,18 @@
         if(Tomatodo.type.WORK==type){
             ctt = $('#work-ctt').val();
             if(!ctt){
-                alert( '请添加工作内容' );
+                $(".alert").slideDown();
+                $('.alert .close').on("click", function(e) {
+                    $(this).parent().slideUp();
+                });
                 return false;
+            }
+            else{
+                $('.alert .close').parent().slideUp();
             }
         }
         else{
-            ctt = "";
-            $('#break-ctt >button').each(function(index, item){
-                var btn = $(item);
-                if(btn.hasClass('active')){
-                    ctt +='【'+btn.text()+'】';
-                }
-            });
+            ctt = "休息";
         }
         me.userWorkbench.current = Tomatodo.Item.newInstance(type, ctt, null);
         return true;
@@ -259,6 +259,7 @@
                 }
             }
         });
+
         $('.cystal-btn').click(function(){
             if(!$(this).hasClass('pressed')){
                 $('.cystal-btn').removeClass('pressed');
@@ -295,6 +296,66 @@
                 $('#historyBoard').fadeOut();
             }
         });
+
+        var Workspace = Backbone.Router.extend({
+            routes: {
+                "": "home",
+                "clock": "clock",
+                "history": "history",
+                "settings": "settings",
+                "intro": "intro"
+            },
+            root: '/',
+            home: function(){
+                $('.view').hide();
+                $('#clockView').show();
+                $('#clockBtn').addClass('pressed');
+            },
+            clock: function(){
+                $('.view').hide();
+                $('#clockView').show();
+                $('#clockBtn').addClass('pressed');
+            },
+            history: function(){
+                $('.view').hide();
+                $('#historyView').show();
+                $('#historyBtn').addClass('pressed');
+            },
+            settings: function(){
+                $('.view').hide();
+                $('#settingsView').show();
+                $('#settingsBtn').addClass('pressed');
+            },
+            intro: function(){
+                $('.view').hide();
+                $('#introView').show();
+                $('#introBtn').addClass('pressed');
+            }
+        });
+        var workspace = new Workspace();
+        Backbone.history.start({pushState: true, hashChange: true});
+        $(document).on("click", "a[href]:not([data-bypass])", function(evt) {
+            var href = { prop: $(this).prop("href"), attr: $(this).attr("href") }; // Get the absolute anchor href.
+            var root = location.protocol + "//" + location.host + workspace.root; // Get the absolute root.
+            // Ensure the root is part of the anchor href, meaning it's relative.
+            if (href.prop.slice(0, root.length) === root) {
+                evt.preventDefault(); // stop page refresh.
+
+                // `Backbone.history.navigate` is sufficient for all Routers and will
+                // trigger the correct events. The Router's internal `navigate` method
+                // calls this anyways.  The fragment is sliced from the root.
+                Backbone.history.navigate(href.attr, true);
+            }
+        });
+        console.log('window width '+ $(window).width());
+        console.log('document width '+ $(document).width());
+        console.log('window height '+ $(window).height());
+        console.log('document height '+ $(document).height());
+        var settings = new td.Settings();
+        var settingsView = new td.SettingsView({model: settings});
+        settingsView.setElement($('#settingsView'));
+        settingsView.render();
+
     });
 </script>
 <style>
@@ -316,198 +377,116 @@
     }
     .item-work {color: gray;}
     .item-break {color: gray;}
-
-    .cystal-btn{
-        border: 2px solid transparent;
-        border-radius: 4px;
-        -moz-border-radius: 4px;
-        -webkit-border-radius: 4px;
-        opacity:0.7;
-        filter: Alpha(opacity=70);
-        -moz-opacity:.7;
-        background:transparent;
-        padding:4px;
-        height:60px;
-        width:60px;
-        display:inline-block;
-        position:relative;
-        float:left;
-        clear:both;
-        margin:5px;
-        overflow:hidden;
-        -webkit-transition:all 0.3s linear;
-        -moz-transition:all 0.3s linear;
-        -o-transition:all 0.3s linear;
-        transition:all 0.3s linear;
-    }
-    .tomato-icon{
-        background:transparent url("./public/tomatodo/img/tomato_48.png") no-repeat 0% 0%;
-    }
-    .settings-icon{
-        background:transparent url("./public/tomatodo/img/settings_48.png") no-repeat 0% 0%;
-    }
-    .clock-icon{
-        background:transparent url("./public/tomatodo/img/clock_48.png") no-repeat 0% 0%;
-    }
-    .calendar-icon{
-        background:transparent url("./public/tomatodo/img/calendar_48.png") no-repeat 0% 0%;
-    }
-    .cystal-btn .cystal-btn-icon {
-        width:48px;
-        height:48px;
-        opacity:0.7;
-        position:absolute;
-        left: 4px;
-        top: 4px;
-        margin: 0px;
-        1background:transparent url("./public/tomatodo/img/clock_48.png") no-repeat 0% 0%;
-        -webkit-transition:all 0.3s linear;
-        -moz-transition:all 0.3s linear;
-        -o-transition:all 0.3s linear;
-        transition:all 0.3s linear;
-    }
-    .cystal-btn .cystal-btn-text {
-        position:absolute;
-        height:100%;
-        top:0px;
-        left:60px;
-        width:0px;
-        color:#1e1e1e;
-        font-size:18px;
-        font-weight: bold;;
-        white-space:nowrap;
-        text-align:left;
-        text-indent:0px;
-        overflow:hidden;
-        line-height:58px;
-    }
-    .cystal-btn:hover{
-        width:160px;
-        border: 2px outset #fff;
-        border-radius: 8px;
-        -moz-border-radius: 8px;
-        -webkit-border-radius: 8px;
-        opacity:1;
-        filter: Alpha(opacity=100);
-        -moz-opacity:1;
-        background-color: rgba(238, 238, 238, 1);
-    }
-    .cystal-btn:hover.pressed{
-        width:160px;
-        border: 2px inset #fff;
-        border-radius: 8px;
-        -moz-border-radius: 8px;
-        -webkit-border-radius: 8px;
-        opacity:1;
-        filter: Alpha(opacity=100);
-        -moz-opacity:1;
-        background-color: rgba(238, 238, 238, 1);
-    }
-    .cystal-btn:hover .cystal-btn-text{
-        width:100px;
-    }
-    .cystal-btn:hover.pressed .cystal-btn-text{
-        width:100px;
-    }
-
-    .cystal-btn:focus{
-        border: 2px outset #fff;
-        border-radius: 8px;
-        -moz-border-radius: 8px;
-        -webkit-border-radius: 8px;
-        opacity:1;
-        filter: Alpha(opacity=100);
-        -moz-opacity:1;
-        background-color: rgba(238, 238, 238, 1);
-    }
-    .cystal-btn.pressed{
-        border: 2px inset #fff;
-        border-radius: 8px;
-        -moz-border-radius: 8px;
-        -webkit-border-radius: 8px;
-        opacity:1;
-        filter: Alpha(opacity=100);
-        -moz-opacity:1;
-        background-color: rgba(238, 238, 238, 1);
-    }
 </style>
 <div class="container-fluid">
 <div class="row-fluid">
-<div class="offset1 span2">
+<div class="offset0 span2">
     <br><br><br><br>
     <div class="row-fluid">
-        <button href="#" class="cystal-btn">
-            <span class="cystal-btn-icon tomato-icon"></span>
-            <span class="cystal-btn-text">工作法</span>
-        </button>
-    </div>
-    <div class="row-fluid">
-        <button id="settingBtn" href="#" class="cystal-btn">
+        <a href="clock" id="clockBtn" class="cystal-btn" set="clock">
             <span class="cystal-btn-icon clock-icon"></span>
             <span class="cystal-btn-text">番茄时钟</span>
-        </button>
+        </a>
     </div>
     <div class="row-fluid">
-        <button id="historyBtn" href="#" class="cystal-btn">
+        <a href="history" id="historyBtn" class="cystal-btn" set="history">
             <span class="cystal-btn-icon calendar-icon"></span>
             <span class="cystal-btn-text">任务记录</span>
-        </button>
-    </div>
-    <div id="historyBoard">
+        </a>
     </div>
     <div class="row-fluid">
-        <button href="#" class="cystal-btn">
+        <a href="settings" id="settingsBtn" class="cystal-btn" set="settings">
             <span class="cystal-btn-icon settings-icon"></span>
             <span class="cystal-btn-text">系统设置</span>
-        </button>
+        </a>
     </div>
+    <div class="row-fluid">
+        <a href="intro" id="introBtn" class="cystal-btn" set="intro">
+            <span class="cystal-btn-icon tomato-icon"></span>
+            <span class="cystal-btn-text">工作法</span>
+        </a>
+    </div>
+
 </div>
 <div class="span6">
 
+    <!--Clock View-->
+    <div class="container-fluid view" id="clockView" set="clock">
+        <div class="row-fluid">
+            <div class="span12">
+                <div id="counter" class="remainTime"></div>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="progress progress-striped active">
+                    <div id="progress" class="bar" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="alert alert-info" id="workAlert" style="display:none;">
+                <button type="button" class="close">&times;</button>
+                请输入任务描述
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span8 nopadding well well-small">
+                <textarea id="work-ctt" rows="1" title="请输入任务..." placeholder="请输入任务..." class="task" style="margin: 0px 77px 0px 0px; width: 406px; height: 20px;"></textarea>
+            </div>
+            <div class="span4 well well-small" style="height:62px;">
+                <button id="workBtn" class="btn btn btn-block1 btn-primary">开始快跑</button>
+                <button id="breakBtn" class="btn btn btn-block1 btn-warning">开始休息</button>
+            </div>
+        </div>
 
-    <div class="row-fluid">
-        <div class="span12">
-            <div id="counter" class="remainTime"></div>
+    </div>
+
+    <!--Settings View-->
+    <div class="container-fluid view hide" id="settingsView" set="settings">
+        <br><br><br><br>
+        <div class="row-fluid">
+            <form class="form-horizontal">
+            <div class="control-group input-append">
+                <label class="control-label" for="workTime">工作时长</label>
+                <div class="controls">
+                    <input type="number" class="span7" id="workTime" value="" placeholder="工作时长">
+                    <span class="add-on">&nbsp;分钟</span>
+                </div>
+            </div>
+            <div class="control-group input-append">
+                <label class="control-label" for="breakTime">休息时长</label>
+                <div class="controls">
+                    <input type="number" class="span7" id="breakTime" value="" placeholder="休息时长">
+                    <span class="add-on">&nbsp;分钟</span>
+                </div>
+            </div>
+            </form>
         </div>
     </div>
-    <div class="row-fluid">
-        <div class="span12">
-            <div class="progress progress-striped active">
-                <div id="progress" class="bar" style="width: 0%;"></div>
+
+    <!--History View-->
+    <div class="container-fluid view hide" id="historyView" set="history">
+        <br><br><br><br>
+        <div id="historyBoard">
+        </div>
+        <div class="row-fluid">
+            <div class="span4">
+
+            </div>
+            <div class="span8">
+
             </div>
         </div>
     </div>
-    <div class="row-fluid">
-        <div class="span8 nopadding well well-small">
-            <textarea id="work-ctt" rows="2" title="请输入任务..." placeholder="请输入任务..." class="task" style="margin: 0px 77px 0px 0px; width: 406px; height: 21px;"></textarea>
-        </div>
-        <div class="span4 well well-small">
-            <button id="workBtn" class="btn btn-large btn-block1 btn-primary">开始快跑</button>
-        </div>
+
+    <!--Method View-->
+    <div class="container-fluid view hide" id="introView" set="intro">
+
     </div>
 
-    <div class="row-fluid">
-        <div class="span8 well well-small">
-            <div id="break-ctt" class="btn-group pull-right" data-toggle="button-checkbox">
-                <button class="btn btn-large1 active">活动身体</button>
-                <button class="btn btn-large1 active">WC</button>
-                <button class="btn btn-large1 active">喝水</button>
-                <button class="btn btn-large1 active">工作回顾</button>
-                <button class="btn btn-large1">其他</button>
-            </div>
-        </div>
-        <div class="span4 well well-small">
-            <button id="breakBtn" class="btn btn-large btn-block1 btn-warning">开始休息</button>
-        </div>
-    </div>
-
-
 </div>
-<div class="span3">
+<div class="span2">
 </div>
 </div>
-
-
-
-
 </div>

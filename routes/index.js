@@ -35,6 +35,23 @@ module.exports = function(app) {
         res.render('index',    {}
         );
     });
+    app.get('/clock', function(req, res) {
+        checkUserToken(req, res);
+        res.render('index', {});
+    });
+    app.get('/history', function(req, res) {
+        checkUserToken(req, res);
+        res.render('index', {});
+    });
+
+    app.get('/settings', function(req, res) {
+        checkUserToken(req, res);
+        res.render('index', {});
+    });
+    app.get('/intro', function(req, res) {
+        checkUserToken(req, res);
+        res.render('index', {});
+    });
 
     app.get('/test', function(req, res) {
         throw new Error('test error handling');

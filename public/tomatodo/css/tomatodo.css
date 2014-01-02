@@ -653,3 +653,116 @@ button:focus.cystal-button img {
     background-repeat: repeat-x;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffaaaaaa', endColorstr='#ff828282', GradientType=0);
 }
+.cystal-btn{
+    border: 2px solid transparent;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    opacity:0.7;
+    filter: Alpha(opacity=70);
+    -moz-opacity:.7;
+    background:transparent;
+    padding:4px;
+    height:48px;
+    width:48px;
+    display:inline-block;
+    position:relative;
+    float:left;
+    clear:both;
+    margin:5px;
+    overflow:hidden;
+    -webkit-transition:all 0.3s linear;
+    -moz-transition:all 0.3s linear;
+    -o-transition:all 0.3s linear;
+    transition:all 0.3s linear;
+}
+.tomato-icon{
+    background:transparent url("../img/tomato2_48.png") no-repeat 0% 0%;
+}
+.settings-icon{
+    background:transparent url("../img/settings_48.png") no-repeat 0% 0%;
+}
+.clock-icon{
+    background:transparent url("../img/clock_48.png") no-repeat 0% 0%;
+}
+.calendar-icon{
+    background:transparent url("../img/calendar_48.png") no-repeat 0% 0%;
+}
+.cystal-btn .cystal-btn-icon {
+    width:48px;
+    height:48px;
+    opacity:0.7;
+    position:absolute;
+    left: 4px;
+    top: 4px;
+    margin: 0px;
+    1background:transparent url("../img/clock_48.png") no-repeat 0% 0%;
+    -webkit-transition:all 0.3s linear;
+    -moz-transition:all 0.3s linear;
+    -o-transition:all 0.3s linear;
+    transition:all 0.3s linear;
+}
+.cystal-btn .cystal-btn-text {
+    position:absolute;
+    height:100%;
+    top:0px;
+    left:60px;
+    width:0px;
+    color:#1e1e1e;
+    font-size:18px;
+    font-weight: bold;;
+    white-space:nowrap;
+    text-align:left;
+    text-indent:0px;
+    overflow:hidden;
+    line-height:58px;
+}
+.cystal-btn:hover{
+    width:160px;
+    border: 2px outset #fff;
+    border-radius: 8px;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    opacity:1;
+    filter: Alpha(opacity=100);
+    -moz-opacity:1;
+    background-color: rgba(238, 238, 238, 1);
+}
+.cystal-btn:hover.pressed{
+    width:160px;
+    border: 2px inset #fff;
+    border-radius: 8px;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    opacity:1;
+    filter: Alpha(opacity=100);
+    -moz-opacity:1;
+    background-color: rgba(238, 238, 238, 1);
+}
+.cystal-btn:hover .cystal-btn-text{
+    width:100px;
+}
+.cystal-btn:hover.pressed .cystal-btn-text{
+    width:100px;
+}
+
+.cystal-btn:focus{
+    border: 2px outset #fff;
+    border-radius: 8px;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    opacity:1;
+    filter: Alpha(opacity=100);
+    -moz-opacity:1;
+    background-color: rgba(238, 238, 238, 1);
+}
+.cystal-btn.pressed{
+    border: 2px inset #fff;
+    border-radius: 8px;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    opacity:1;
+    filter: Alpha(opacity=100);
+    -moz-opacity:1;
+    background-color: rgba(238, 238, 238, 1);
+}
